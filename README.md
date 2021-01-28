@@ -9,7 +9,7 @@ socket can be proxied or encrypted. The server runs in user-space. The remote
 client can access the (synthetic) squashfs filesystem with a linux kernel, or
 from user-space with other tools.
 
-psqfs-nbd-sever has similar functionality to read-only-NFS but there are some
+psqfs-nbd-server has similar functionality to read-only-NFS but there are some
 drastic differences in implementation which make it better-suited for some
 applications.
 
@@ -38,7 +38,7 @@ This builds the server without TLS support.
 make
 ```
 
-This builds the sever with TLS support but requires GNU TLS headers and libraries installed.
+This builds the server with TLS support but requires GNU TLS headers and libraries installed.
 ```bash
 make psqfs-nbd-server
 ```
