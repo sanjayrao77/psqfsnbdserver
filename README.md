@@ -10,7 +10,7 @@ client can access the (synthetic) squashfs filesystem with a linux kernel, or
 from user-space with other tools.
 
 psqfs-nbd-sever has similar functionality to read-only-NFS but there are some
-drastic differences in implementation which make it better suited for some
+drastic differences in implementation which make it better-suited for some
 applications.
 
 It's similar to http/https in accessing mounted directories but NBD/squashfs
@@ -29,6 +29,19 @@ A client can connect to this with "*$ modprobe nbd ; nbd-client -N . 192.168.1.2
 printed on startup. Following that with something like "*$ mount -t auto
 /dev/nbd0 /mnt/tmp -o ro*" will allow access to the files.
 
+## Building
+This is built for linux. It should work on other unix-like systems but might take
+some modification.
+
+This builds the server without TLS support.
+```bash
+make
+```
+
+This builds the sever with TLS support but requires GNU TLS headers and libraries installed.
+```bash
+make psqfs-nbd-server
+```
 
 ## Use cases
 
@@ -61,7 +74,7 @@ Most options will be set via a config file. See below for those options.
 
 Usage: psqfs-nbd-server -d -l -v [config file]
 
-###. : (quick start)
+### . : (quick start)
 -	Share the current directory on a free port with no security.
 -	Running "psqfs-nbd-server ." is a quick way to export a directory.
 -	This sets the global options "verbose=yes", "debug=yes", "port=3000".
@@ -69,32 +82,32 @@ Usage: psqfs-nbd-server -d -l -v [config file]
 -	It also attempts to find an open listening port if tcp:3000 is unavailable.
 -	This is meant to be used with no other options or config file.
 
-###-d : (debug)
+### -d : (debug)
 -	The server will run in the foreground and messages will be sent to the
 console.
 -	This sets the global options "background=no", "debug=yes" and "verbose=yes".
 These values can be changed in the config file but stderr output will
 only happen with "-d" on the command line.
 
-###-l : (list clients)
+### -l : (list clients)
 -	If the global option "trackclients=yes" is set, then this will list
 information about attached clients. This must be run as root or with
 the same uid as the running server.
 -	This is disabled by default and needs "trackclients=yes" to enable it.
 
-###-v : (verbose)
+### -v : (verbose)
 -	This prints additional information to syslog. This does nothing when
 combined with "-d".
 -	This only sets the global option "verbose=yes" and can be nullified by a
 "verbose=no" in the config file.
 
-###[config file] : explicit location of config file
+### [config file] : explicit location of config file
 -	Without this, a config file is sought in /etc/nbd-server/psqfs-config,
 ~/.psqfsnbd and  ~/.config/psqfs-nbd-server/config .
 -	The options and format of the config file are described below.
 
 
-##Configuration file format
+## Configuration file format
 
 It's a text file. Blank lines and lines starting with # are ignored.
 Leading white space is ignored.
@@ -151,7 +164,7 @@ Connected clients can be listed with "$ ./psqfs-nbd-server -l", run as root or
 the same user the server runs under.
 
 
-##Configuration options
+## Configuration options
 
 Most server options are set in a config file, either in /etc or in a home directory.
 
@@ -163,39 +176,39 @@ also possible to set some options globally and have them affect multiple exports
 are also options that only apply globally.
 
 
-##Global options
+## Global options
 
 These options must be contained in a "[global]" or "[generic]" section of the
 config file. It's also possible to set export option defaults in [global]
 sections but those keywords are listed further below under Global Defaults.
 
-###background=yes/no, default: yes
+### background=yes/no, default: yes
 -	This tells the server to run in the background. Foreground servers can be useful for
 users or for debugging.
 
-###clientmax=(number), default: 5
+### clientmax=(number), default: 5
 -	The maximum number of simultaneous clients. Each client has its own process.
 When the maximum is hit, new connections will be ignored until an existing
 client disconnects (or is disconnected).
 
-###debug=yes/no, default: no
+### debug=yes/no, default: no
 -	If yes, the server will output information that could help while debugging
 errors. See also "verbose".
 -	Messages will be sent to syslog. If you want messages to stderr, use the
 "-d" command line option, which does that as well as this.
 
-###port=(number), default: 10809
+### port=(number), default: 10809
 -	The default TCP port to listen on. The default for the NBD protocol is 10809 but
 it may be used already by another server. When running as a user, another port should
 be chosen.
 
-###portsearch=(number), default: 0
+### portsearch=(number), default: 0
 -	If the specified port (10809 by default) is not available, try the next successive
 port (10810, 10811, etc.) and keep going "number" times before we give up.
 -	This is not that useful because clients have no easy way to determine the ultimate
 port. It can be useful for ad hoc use.
 
-###portwait=(number), default: 0
+### portwait=(number), default: 0
 -	If the specified port is not available, retry for this many seconds before giving up.
 A value of 0 will cause the server to fail immediately if the port is occupied. If
 another program has already released the port, it can take a short time before the port
@@ -204,7 +217,7 @@ value to around 120 can be useful.
 -	In particular, if this server is killed and restarted, the port may be unavailable
 for a few minutes. A value of 120 might be prudent.
 
-###shorttimeout=(number), default: 60, also sets the default "shorttimeout" export option
+### shorttimeout=(number), default: 60, also sets the default "shorttimeout" export option
 -	A number of seconds of inactivity before a client is disconnected. This value
 is used before a client has supplied any credentials. Export settings can
 increase the timeout for transactions after an export has been applied.
@@ -212,38 +225,38 @@ increase the timeout for transactions after an export has been applied.
 on a per-export basis.
 -	A short value can help avoid denial-of-service stale slots.
 
-###trackclients=yes/no, default: no
+### trackclients=yes/no, default: no
 -	If "trackclients=yes", then the server will export information about attached
 clients. This is stored in the processes' environment and is only readable by
 processes with the server's uid and root.
 -	If enabled, connected clients can be listed with "psqfs-nbd-server -l".
 
-###tlscert=(filename)
+### tlscert=(filename)
 -	A filename for a PEM format certificate file. This is required for TLS and
 unused for non-TLS. TLS can be used by a client if tlscert= and tlskey= are
 supplied.
 -	After you have a private key, this can be generated by "certtool
 --generate-self-signed --load-privkey YOURNAME.key --outfile YOURNAME.cert".
 
-###tlskey=(filename)
+### tlskey=(filename)
 -	A filename for a PEM format private key file. This is required for TLS and
 unused for non-TLS. TLS can be used by a client if tlscert= and tlskey= are
 supplied.
 -	This can be generated by "certtool --generate-privkey --outfile
 YOURNAME.key".
 
-###tlsrequired=yes/no, default: no
+### tlsrequired=yes/no, default: no
 -	If "tlsrequired=yes", then all clients have to start TLS when they connect.
 By effect, the "tlsrequired" option in exports is then meaningless as TLS is
 necessary before that matters.
 -	If "tlsrequired=no", then export listing is possible without TLS and individual
 exports can decide whether TLS is required via the "tlsrequired" export option.
 
-###verbose=yes/no, default: no
+### verbose=yes/no, default: no
 -	This will print more information to syslog about what the server is doing.
 
 
-##Export keywords
+## Export keywords
 
 To define an export, a line of the form "[exportname]" should exist in the
 config file. Options for the export will follow that line. The names "generic"
@@ -251,17 +264,17 @@ and "global" are invalid for an export. Also, an export name can't contain the
 ']' or '\0' characters. UTF8 is fine.
 
 
-###4kpad=yes/no, This is an action, not a setting
+### 4kpad=yes/no, This is an action, not a setting
 -	If the line "4kpad=yes" is found, the server will add 0s to the exported
 image until the so-far specified size is a multiple of 4096. This is not
 necessary after a "directory=" or "overlay=" line. It's useful after adding
 a literal block with "filename_ro=" and when the client is a kernel.
 
-###allownet=IP[/number], inherits from global's allownet values
+### allownet=IP[/number], inherits from global's allownet values
 -	If the export is "denyall=yes", this authorizes an IP range to access this export.
 -	Examples: "allownet=127.0.0.1", "allownet=::1", "allownet=192.168.1.0/24"
 
-###allowtlsnet=IP[/number], inherits from global's allowtlsnet values
+### allowtlsnet=IP[/number], inherits from global's allowtlsnet values
 -	If the export is "denyall=yes", this authorizes an IP range to acces this export
 but ONLY if the client has enabled TLS. This is useful for non-TLS clients on a LAN
 and TLS-only clients on a WAN.
@@ -277,11 +290,11 @@ and TLS-only clients on a WAN.
 ```
 -	See "allownet" for additional examples.
 
-###denyall=yes/no, default: no, inherits from global's denyall
+### denyall=yes/no, default: no, inherits from global's denyall
 -	Access can be restricted by IP if denyall=yes. If denyall=no, then all IPs can access
 the export.
 
-###directory=(directory)
+### directory=(directory)
 -	No more than one directory should be specified for an export. It is not required.
 -	This tells the server to read the given directory and export it as a squashfs filesystem
 when the export is requested. Access will be read-only.
@@ -292,7 +305,7 @@ keyword to merge other files and directories into the synthetic squashfs filesys
 This is useful when combined with "overlay". It's also implied if an "overlay" is specified
 without a preceding "directory".
 
-###filename_ro=(filename)
+### filename_ro=(filename)
 -	This appends the file or block device data specified by (filename) into the export's image.
 -	If you want 4096-byte padding, see the "4kpad" keyword.
 -	Multiple files can be added this way. The client will see a single block device as a
@@ -309,12 +322,12 @@ fails, reading will still proceed.
 	filename_ro=/dev/sdc1
 ```
 
-###group=(groupname)
+### group=(groupname)
 -	Specify a group to setgid() to after binding listening socket.
 -	When running as non-root, this will probably create an error.
 -	See "user" for more information.
 
-###gziplevel=(number), default 6, inherits from global's "gziplevel"
+### gziplevel=(number), default 6, inherits from global's "gziplevel"
 -	(number) should be 0 through 9, corresponding to zlib's level.
 -	If "gziplevel=0" is specified, any sqfs images created with "directory" will
 be completely uncompressed. This is faster for the server to build and is
@@ -323,16 +336,16 @@ necessary for clients that don't support compression.
 hand, the image will be smaller so less memory is needed to store it and
 less bandwdith in needed to satisfy requests.
 
-###keepalive=yes/no, default ?
+### keepalive=yes/no, default ?
 -	If "keepalive=yes", the client's tcp socket will be set to SO_KEEPALIVE
 so the connection looks alive to the network. Note that "longtimeout"
 doesn't see this as traffic.
 
-###keypermit=KEY, inherits from global's keypermit values
+### keypermit=KEY, inherits from global's keypermit values
 -	The value "KEY" will be accepted as a valid key to access this export.
 See "keyrequired".
 
-###keyrequired=yes/no, default: no
+### keyrequired=yes/no, default: no
 -	Access to an export can be restricted by a key, like a password. If
 "keyrequired=yes", then the client must send "exportname]KEY" (note the ']') to
 access the export. When configuring the clients, just enter "exportname]KEY"
@@ -351,11 +364,11 @@ with "keypermit".
 	keypermit=guestpassword
 ```
 
-###longtimeout=(number), default: 7\*24\*60\*60 (1 week), inherits from global's "longtimeout"
+### longtimeout=(number), default: 7\*24\*60\*60 (1 week), inherits from global's "longtimeout"
 -	Clients will be disconnected after (number) seconds of idleness when waiting for
 a command.
 
-###listed=yes/no, default: yes, inherits from global's "listed"
+### listed=yes/no, default: yes, inherits from global's "listed"
 -	An export that is "listed=yes" will be shown to authorized clients which ask
 for an export list. Note that an IP or TLS requirement ("denyall","tlsrequired")
 may prevent a client from asking for an export list.
@@ -366,29 +379,29 @@ key is required. The client could then try again with a key. With "listed=no",
 a client is not given information about key requirements as that would tell
 the client the export exists.
 
-###maxfiles=(number), default: 0 (no max), inherits from global's "maxfiles"
+### maxfiles=(number), default: 0 (no max), inherits from global's "maxfiles"
 -	When scanning a directory, if (number) is exceeded, the server abandons the
 scan with an error.
 -	While this prevents infinite loops, such loops should already be detected by
 an inode collision detection. This might detect a loop sooner.
 -	To specify no maximum, 0 can be entered.
 
-###nodelay=yes/no, default: yes, inherits from global's "nodelay"
+### nodelay=yes/no, default: yes, inherits from global's "nodelay"
 -	Set the tcp option TCP\_NODELAY. This might reduce the server's latency at
 the cost of efficiency.
 
-###shorttimeout=(number), default: 60 (1 minute), inherits from global's "shorttimeout"
+### shorttimeout=(number), default: 60 (1 minute), inherits from global's "shorttimeout"
 -	Disconnect a client after (number) seconds when expecting a reply. This should
 be set higher for slow or unreliable links.
 
-###tlsrequired=yes/no, default: no, inherits from global's "tlsrequired"
+### tlsrequired=yes/no, default: no, inherits from global's "tlsrequired"
 -	Require the client to have enabled TLS encryption before asking for this
 export. If the client has enabled TLS, the export name and key are transmitted
 while TLS is active.
 -	It's still possible for a non-TLS client to send the export name and key
 unencrypted. Clients should be pre-configured to request TLS if TLS is wanted.
 
-###overlay=(realpath) -> (fakepath)
+### overlay=(realpath) -> (fakepath)
 -	Create the specified (fakepath) in the squashfs filesystem. Any needed
 directories will be created. The actual data will come from (realpath). The
 overlay will be ignored if (fakepath) already exists in the filesystem.
@@ -414,7 +427,7 @@ Anything else will not be parsed correctly.
 	overlay=/dev/sdb2 -> /partitions/sdb2
 ```
 
-###overlayraw=(realpath) -> (fakepath)
+### overlayraw=(realpath) -> (fakepath)
 -	This is like the "overlay" keyword but it adds "realpath" literally.
 -	If "realpath" is a symbolic link, it will add the symbolic link rather
 than the target.
@@ -427,7 +440,7 @@ Anything else will not be parsed correctly.
 -	See the "overlay" keyword for more information.
 	
 
-###preload=yes/no, default: no, inherits from global's "preload"
+### preload=yes/no, default: no, inherits from global's "preload"
 -	If "preload=yes", the squashfs image will be created when the server first
 starts and before it accepts any clients.
 -	This has the advantage that multiple clients sharing the same export will
@@ -438,7 +451,7 @@ disadvantage is that the filesystem overhead will occupy system memory even if
 the export isn't being used.
 -	On the other hand, this is very useful for debugging.
 
-###user=(username)
+### user=(username)
 -	Specify a user to setuid() to after binding listening socket.
 -	Along with "group", the specified user.group combination will need
 to be able to read any files specified by the exports.
@@ -447,22 +460,22 @@ to be able to read any files specified by the exports.
 be made that exported files can be accessed after setuid/setgid.
 
 
-##Global defaults
+## Global defaults
 
 These values can be set in a [global] section as defaults for exports.
 They have no effect per se. Note that some global options, listed
 above, can also be used to set defaults for exports. Also note that
 multiple [global] sections are allowed.
 
-###allownet=IP[/number]
+### allownet=IP[/number]
 -	This sets defaults for the "allownet" export option. Any IP range
 specified here will apply to all exports until an "allowreset=yes" is listed.
 
-###allowtlsnet=IP/number]
+### allowtlsnet=IP/number]
 -	This sets defaults for the "allowtlsnet" export option. Any IP range
 specified here will apply to all exports until an "allowreset=yes" is listed.
 
-###allowreset=yes/no
+### allowreset=yes/no
 -	An "allowreset=yes" line clears the "allownet" and "allowtlsnet" global
 default values. Any new "allownet" and "allowtlsnet" values which follow this
 line will be applied to following exports only.
@@ -481,24 +494,24 @@ line will be applied to following exports only.
 	directory=/mnt/private
 ```
 	
-###denyall=yes/no
+### denyall=yes/no
 -	This sets defaults for the "denyall" export option. Exports following this
 line
 	
-###gziplevel=(number), number in [0..9]
+### gziplevel=(number), number in [0..9]
 -	This sets the defaults for the "gziplevel" export option.
 
-###keepalive=yes/no
+### keepalive=yes/no
 -	This sets the default on the "keepalive" export option.
 
-###keypermit=KEY
+### keypermit=KEY
 -	This sets the defaults for the "keypermit" export option. Any key
 listed here will be valid for every export until a "keyreset=yes" line.
 
-###keyrequired=yes/no
+### keyrequired=yes/no
 -	This sets the default for the "keyrequired" export option.
 
-###keyreset=yes/no
+### keyreset=yes/no
 -	This clears all the global "keypermit" defaults. Following exports will
 not inherit any previously specified "keypermit" values. Any keys specified
 after this will only be inherited by following exports.
@@ -518,19 +531,19 @@ after this will only be inherited by following exports.
 	directory=/mnt/export2
 ```
 
-###longtimeout=(number)
+### longtimeout=(number)
 -	This sets the default for the "longtimeout" export option.
 
-###listed=yes/no
+### listed=yes/no
 -	This sets the default for the "listed" export option.
 
-###maxfiles=(number)
+### maxfiles=(number)
 -	This sets the default for the "maxfiles" export option.
 
-###nodelay=yes/no
+### nodelay=yes/no
 -	This sets the default for the "nodelay" export option.
 
-###overlay=(realpath) -> (fakepath)
+### overlay=(realpath) -> (fakepath)
 -	This sets the defaults the "overlay" export option. If you want to
 overlay the same file(s) in many of your exports, this lets you do
 that.
@@ -539,10 +552,10 @@ them.
 -	Note that the delimiter is " -> ", literally, space-hyphen-greaterthan-space.
 Anything else will not be parsed correctly.
 
-###overlayreset=yes/no
+### overlayreset=yes/no
 -	This clears all the global "overlay" defaults. Following exports will
 not inherit any previously specified "overlay" values. Any overlays
 specified after this will only be inherited by following exports.
 
-###preload=yes/no
+### preload=yes/no
 -	This sets the default for the "preload" export option.
