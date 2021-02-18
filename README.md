@@ -67,6 +67,22 @@ squashfs.o
 1. The client needs to reconnect to see changes to the underlying filesystem
 1. 5=> This is best for exporting files that don't change often
 
+## Other related programs
+
+I've written some other related programs that are useful in conjunction
+with psqfs-nfs-server.
+
+[nbdrelay:](https://github.com/sanjayrao77/nbdrelay) this program can
+create a local nbd server and forward requests to a remote instance of
+psqfs-nfs-server. This can recover from intermittent network connections
+so clients can persist through network drops. Also, it lets inactive
+connections timeout, freeing server resources without the client having
+to reconfigure.
+
+[squashfsdebugshell:](https://github.com/sanjayrao77/squashfsdebugshell) this
+program lets you test psqfs-nfs-server without using the kernel nbd driver. It acts
+as an nbd (or nbd-tls) client without needing root privileges. There are also
+commands to explore the squashfs filesystem structures.
 
 ## Command line options
 
