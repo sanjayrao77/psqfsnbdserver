@@ -180,6 +180,26 @@ error:
 	return NULL;
 }
 
+static int checkempty_table_mkfs(struct temp_sqfs_mkfs *temp, struct table_mkfs *table) {
+struct metablock_mkfs *current;
+struct metablock_mkfs *nmb;
+unsigned short blocksize;
+
+if (table->blockleft) return 0;
+
+current=table->current;
+if (!(nmb=swap_metablock(&blocksize,temp,current))) GOTOERROR;
+current->next=nmb;
+table->current=nmb;
+table->blockfill=0;
+table->blockleft=SIZE_METABLOCK;
+table->blockoffset+=blocksize+2;
+
+return 0;
+error:
+	return -1;
+}
+
 static int append_table_mkfs(struct temp_sqfs_mkfs *temp, struct table_mkfs *table, unsigned char *packet, unsigned int num) {
 struct metablock_mkfs *current;
 
@@ -249,6 +269,12 @@ struct common_inode {
 
 static inline int addcommon(struct temp_sqfs_mkfs *temp, struct common_scan *cs, uint16_t type) {
 unsigned char buffer[16];
+
+if (checkempty_table_mkfs(temp,&temp->inode_table)) GOTOERROR;
+if (!temp->inode_table.blockleft) {
+	fprintf(stderr,"No block left\n");
+	GOTOERROR;
+}
 
 cs->inode->blocksoffset=temp->inode_table.blockoffset;
 cs->inode->offsetinblock=temp->inode_table.blockfill;
