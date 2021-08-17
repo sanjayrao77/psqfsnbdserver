@@ -85,6 +85,8 @@ s->cleanup.offset=0;
 if (MAP_FAILED==(s->data=s->cleanup.ptr_mmap=mmap(NULL,filesize,PROT_READ,MAP_SHARED,fd,0))) {
 	if (errno!=ENODEV) GOTOERROR;
 	if (readoff_nommap(s,fd,offset,s->filesize)) GOTOERROR;
+} else {
+	s->data+=offset;
 }
 s->cleanup.fd=fdcleanup;
 return 0;
